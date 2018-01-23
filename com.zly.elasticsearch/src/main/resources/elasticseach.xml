@@ -9,18 +9,18 @@
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
     <util:map id="esproperties">
-        <entry key="cluster.name" value="${elasticsearch.cluster.name}" />
+        <entry key="cluster.name" value="${elasticsearch.cluster.name}"/>
     </util:map>
 
     <elasticsearch:client id="client" properties="esproperties"
-                          esNodes="${elasticsearch.nodes}" />
+                          esNodes="localhost:9300"/>
 
     <bean name="elasticsearchTemplate"
           class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
-        <constructor-arg name="client" ref="client" />
+        <constructor-arg name="client" ref="client"/>
     </bean>
 
-   <bean name="elasticsearchService" class="com.zly.elasticsearch.service.ElasticsearchService"
-          init-method="init" />
+    <bean name="elasticsearchService" class="com.zly.elasticsearch.service.ElasticsearchService"
+          init-method="init"/>
 
 </beans>
