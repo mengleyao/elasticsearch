@@ -13,7 +13,7 @@
     </util:map>
 
     <elasticsearch:client id="client" properties="esproperties"
-                          esNodes="${elasticsearch.esNodes}" />
+                          esNodes="${elasticsearch.nodes}" />
 
     <bean name="elasticsearchTemplate"
           class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
