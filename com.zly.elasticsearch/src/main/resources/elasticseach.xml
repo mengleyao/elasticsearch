@@ -20,7 +20,7 @@
         <constructor-arg name="client" ref="client" />
     </bean>
 
-   <bean name="elasticsearchService" class="com.zly.elasticsearch.service.ElasticSearchService"
+   <bean name="elasticsearchService" class="com.zly.elasticsearch.service.ElasticsearchService"
           init-method="init" />
 
 </beans>

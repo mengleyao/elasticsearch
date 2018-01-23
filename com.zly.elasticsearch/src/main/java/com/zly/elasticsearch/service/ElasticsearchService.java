@@ -21,28 +21,30 @@ import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.core.query.IndexQuery;
 import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class ElasticSearchService {
-    private static final Logger logger = Logger.getLogger(ElasticSearchService.class);
+@Service("elasticsearchService")
+public class ElasticsearchService {
+    private static final Logger logger = Logger.getLogger(ElasticsearchService.class);
 
     private String esIndexName = "heros";
 
-    @Autowired
+    @Resource
     private ElasticsearchTemplate elasticsearchTemplate;
 
-    @Autowired
+    @Resource
     private Client esClient;
 
-    @Autowired
+    @Resource
     private Client client;
 
     /**
@@ -197,20 +199,12 @@ public class ElasticSearchService {
     /**
      * 查询得到结果为Map集合
      *
-     * @author 高国藩
-     * @date 2015年6月15日 下午8:46:13
-     * @param type
-     *            表
-     * @param fields
-     *            字段索引
-     * @param content
-     *            查询的值
-     * @param sortField
-     *            排序的字段
-     * @param order
-     *            排序的規則
-     * @param from
-     *            分頁
+     * @param type 表
+     * @param fields 字段索引
+     * @param content 查询的值
+     * @param sortField 排序的字段
+     * @param order 排序的規則
+     * @param from 分頁
      * @param size
      * @return
      */
@@ -282,8 +276,6 @@ public class ElasticSearchService {
     /**
      * 多个文字记不清是那些字,然后放进去查询
      *
-     * @author 高国藩
-     * @date 2015年6月16日 上午9:56:08
      * @param type
      * @param field
      * @param countents
@@ -338,8 +330,6 @@ public class ElasticSearchService {
      * FilterBuilders.rangeFilter("taskState").lt(20) 小于 、 lte(20) 小于等于
      * FilterBuilders.rangeFilter("taskState").gt(20)) 大于  、 gte(20) 大于等于
      * FilterBuilders.rangeFilter("taskState").from(start).to(end)) 范围,也可以指定日期,用字符串就ok了
-     * @author 高国藩
-     * @date 2015年6月15日 下午10:06:05
      * @param type
      * @param field
      * @return
