@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="com.zly.elasticsearch:war">
+    <output-path>$PROJECT_DIR$/com.zly.elasticsearch/target</output-path>
+    <root id="archive" name="com.zly.elasticsearch.war">
+      <element id="artifact" artifact-name="com.zly.elasticsearch:war exploded" />
+    </root>
+  </artifact>
+</component>
