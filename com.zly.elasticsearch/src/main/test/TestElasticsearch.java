@@ -16,27 +16,26 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.node.DiscoveryNode;
-import org.elasticsearch.common.collect.ImmutableList;
-import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.query.FilterBuilders;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
-import org.elasticsearch.search.highlight.HighlightField;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,19 +54,19 @@ public class TestElasticsearch {
         /**
          * 1:通过 setting对象来指定集群配置信息
          */
-        Settings setting = ImmutableSettings.settingsBuilder()
-                .put("cluster.name", "shb01")//指定集群名称
-                .put("client.transport.sniff", true)//启动嗅探功能
-                .build();
+        Settings settings = Settings.builder().put("cluster.name", "test").build();
 
         /**
          * 2：创建客户端
          * 通过setting来创建，若不指定则默认链接的集群名为elasticsearch
          * 链接使用tcp协议即9300
          */
-        transportClient = new TransportClient(setting);
-        TransportAddress transportAddress = new InetSocketTransportAddress("116.192.95.212", 9200);
-        transportClient.addTransportAddresses(transportAddress);
+        try {
+            transportClient = new PreBuiltTransportClient(settings)
+                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("116.196.95.212"), 9300));
+        }catch (Exception e){
+
+        }
 
         /**
          * 3：查看集群信息
@@ -77,9 +76,8 @@ public class TestElasticsearch {
          * 所有控制台只打印了192.168.79.128,只能获取数据节点
          *
          */
-        ImmutableList<DiscoveryNode> connectedNodes = transportClient.connectedNodes();
-        for(DiscoveryNode node : connectedNodes)
-        {
+        List<DiscoveryNode> nodes = transportClient.connectedNodes();
+        for (DiscoveryNode node : nodes) {
             System.out.println(node.getHostAddress());
         }
 
@@ -304,7 +302,7 @@ public class TestElasticsearch {
         SearchResponse searchResponse = transportClient.prepareSearch("shb01","shb02").setTypes("stu","tea")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .setTimeout("3")
+                .setTimeout(new TimeValue(3000l))
                 .get();
 
         SearchHits hits = searchResponse.getHits();
@@ -358,7 +356,7 @@ public class TestElasticsearch {
         SearchResponse searchResponse = transportClient.prepareSearch(index)
                 .setTypes(type)
                 //.setQuery(QueryBuilders.matchQuery("name", "Fresh")) //查询所有
-                .setQuery(QueryBuilders.queryString("name:F*"))
+                .setQuery(QueryBuilders.queryString("name:F*")
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .addHighlightedField("name")
                 .setHighlighterPreTags("<font color='red'>")
