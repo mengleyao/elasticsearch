@@ -169,29 +169,29 @@ public class ElasticsearchService {
     /** 查询 id */
     public List<String> queryId(String type, String[] fields, String content,
                                 String sortField, SortOrder order, int from, int size) {
-        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
-                .setTypes(type).setSearchType(SearchType.DEFAULT)
-                .setExplain(true);
-        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
-                + content + "\"");
-        for (String k : fields) {
-            queryString.field(k);
-        }
-        queryString.minimumShouldMatch("10");
-        reqBuilder.setQuery(QueryBuilders.boolQuery().should(queryString))
-                .setExplain(true);
-        if (StringUtils.isNotEmpty(sortField) && order != null) {
-            reqBuilder.addSort(sortField, order);
-        }
-        if (from >= 0 && size > 0) {
-            reqBuilder.setFrom(from).setSize(size);
-        }
-        SearchResponse resp = reqBuilder.execute().actionGet();
-        SearchHit[] hits = resp.getHits().getHits();
+//        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
+//                .setTypes(type).setSearchType(SearchType.DEFAULT)
+//                .setExplain(true);
+//        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
+//                + content + "\"");
+//        for (String k : fields) {
+//            queryString.field(k);
+//        }
+//        queryString.minimumShouldMatch("10");
+//        reqBuilder.setQuery(QueryBuilders.boolQuery().should(queryString))
+//                .setExplain(true);
+//        if (StringUtils.isNotEmpty(sortField) && order != null) {
+//            reqBuilder.addSort(sortField, order);
+//        }
+//        if (from >= 0 && size > 0) {
+//            reqBuilder.setFrom(from).setSize(size);
+//        }
+//        SearchResponse resp = reqBuilder.execute().actionGet();
+//        SearchHit[] hits = resp.getHits().getHits();
         ArrayList<String> results = new ArrayList<String>();
-        for (SearchHit hit : hits) {
-            results.add(hit.getId());
-        }
+//        for (SearchHit hit : hits) {
+//            results.add(hit.getId());
+//        }
         return results;
     }
 
@@ -210,31 +210,31 @@ public class ElasticsearchService {
     public List<Map<String, Object>> queryForObject(String type,
                                                     String[] fields, String content, String sortField, SortOrder order,
                                                     int from, int size) {
-        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
-                .setTypes(type).setSearchType(SearchType.DEFAULT)
-                .setExplain(true);
-        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
-                + content + "\"");
-        for (String k : fields) {
-            queryString.field(k);
-        }
-        queryString.minimumShouldMatch("10");
-        reqBuilder.setQuery(QueryBuilders.boolQuery().should(queryString))
-                .setExplain(true);
-        if (StringUtils.isNotEmpty(sortField) && order != null) {
-            reqBuilder.addSort(sortField, order);
-        }
-        if (from >= 0 && size > 0) {
-            reqBuilder.setFrom(from).setSize(size);
-        }
-
-        SearchResponse resp = reqBuilder.execute().actionGet();
-        SearchHit[] hits = resp.getHits().getHits();
+//        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
+//                .setTypes(type).setSearchType(SearchType.DEFAULT)
+//                .setExplain(true);
+//        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
+//                + content + "\"");
+//        for (String k : fields) {
+//            queryString.field(k);
+//        }
+//        queryString.minimumShouldMatch("10");
+//        reqBuilder.setQuery(QueryBuilders.boolQuery().should(queryString))
+//                .setExplain(true);
+//        if (StringUtils.isNotEmpty(sortField) && order != null) {
+//            reqBuilder.addSort(sortField, order);
+//        }
+//        if (from >= 0 && size > 0) {
+//            reqBuilder.setFrom(from).setSize(size);
+//        }
+//
+//        SearchResponse resp = reqBuilder.execute().actionGet();
+//        SearchHit[] hits = resp.getHits().getHits();
 
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
-        for (SearchHit hit : hits) {
-            results.add(hit.getSource());
-        }
+//        for (SearchHit hit : hits) {
+//            results.add(hit.getSource());
+//        }
         return results;
     }
 
@@ -244,31 +244,31 @@ public class ElasticsearchService {
     public List<Map<String, Object>> queryForObjectEq(String type,
                                                       String[] fields, String content, String sortField, SortOrder order,
                                                       int from, int size) {
-        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
-                .setTypes(type).setSearchType(SearchType.DEFAULT)
-                .setExplain(true);
-        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
-                + content + "\"");
-        for (String k : fields) {
-            queryString.field(k);
-        }
-        queryString.minimumShouldMatch("10");
-        reqBuilder.setQuery(QueryBuilders.boolQuery().must(queryString))
-                .setExplain(true);
-        if (StringUtils.isNotEmpty(sortField) && order != null) {
-            reqBuilder.addSort(sortField, order);
-        }
-        if (from >= 0 && size > 0) {
-            reqBuilder.setFrom(from).setSize(size);
-        }
+//        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
+//                .setTypes(type).setSearchType(SearchType.DEFAULT)
+//                .setExplain(true);
+//        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
+//                + content + "\"");
+//        for (String k : fields) {
+//            queryString.field(k);
+//        }
+//        queryString.minimumShouldMatch("10");
+//        reqBuilder.setQuery(QueryBuilders.boolQuery().must(queryString))
+//                .setExplain(true);
+//        if (StringUtils.isNotEmpty(sortField) && order != null) {
+//            reqBuilder.addSort(sortField, order);
+//        }
+//        if (from >= 0 && size > 0) {
+//            reqBuilder.setFrom(from).setSize(size);
+//        }
 
-        SearchResponse resp = reqBuilder.execute().actionGet();
-        SearchHit[] hits = resp.getHits().getHits();
+//        SearchResponse resp = reqBuilder.execute().actionGet();
+//        SearchHit[] hits = resp.getHits().getHits();
 
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
-        for (SearchHit hit : hits) {
-            results.add(hit.getSource());
-        }
+//        for (SearchHit hit : hits) {
+//            results.add(hit.getSource());
+//        }
         return results;
     }
 
@@ -288,31 +288,31 @@ public class ElasticsearchService {
                                                          String field, Collection<String> countents, String sortField,
                                                          SortOrder order, int from, int size) {
 
-        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
-                .setTypes(type).setSearchType(SearchType.DEFAULT)
-                .setExplain(true);
-        List<String> contents = new ArrayList<String>();
-        for (String content : countents) {
-            contents.add("\"" + content + "\"");
-        }
-        TermsQueryBuilder inQuery = QueryBuilders.inQuery(field, contents);
-        inQuery.minimumShouldMatch("10");
-        reqBuilder.setQuery(QueryBuilders.boolQuery().mustNot(inQuery))
-                .setExplain(true);
-        if (StringUtils.isNotEmpty(sortField) && order != null) {
-            reqBuilder.addSort(sortField, order);
-        }
-        if (from >= 0 && size > 0) {
-            reqBuilder.setFrom(from).setSize(size);
-        }
-
-        SearchResponse resp = reqBuilder.execute().actionGet();
-        SearchHit[] hits = resp.getHits().getHits();
+//        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
+//                .setTypes(type).setSearchType(SearchType.DEFAULT)
+//                .setExplain(true);
+//        List<String> contents = new ArrayList<String>();
+//        for (String content : countents) {
+//            contents.add("\"" + content + "\"");
+//        }
+//        TermsQueryBuilder inQuery = QueryBuilders.inQuery(field, contents);
+//        inQuery.minimumShouldMatch("10");
+//        reqBuilder.setQuery(QueryBuilders.boolQuery().mustNot(inQuery))
+//                .setExplain(true);
+//        if (StringUtils.isNotEmpty(sortField) && order != null) {
+//            reqBuilder.addSort(sortField, order);
+//        }
+//        if (from >= 0 && size > 0) {
+//            reqBuilder.setFrom(from).setSize(size);
+//        }
+//
+//        SearchResponse resp = reqBuilder.execute().actionGet();
+//        SearchHit[] hits = resp.getHits().getHits();
 
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
-        for (SearchHit hit : hits) {
-            results.add(hit.getSource());
-        }
+//        for (SearchHit hit : hits) {
+//            results.add(hit.getSource());
+//        }
         return results;
     }
 
@@ -336,24 +336,24 @@ public class ElasticsearchService {
     public List<Map<String, Object>> queryForObjectForElasticSerch(String type,
                                                                    String field, String content,int start,int end) {
 
-        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
-                .setTypes(type).setSearchType(SearchType.DEFAULT)
-                .setExplain(true);
-        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
-                + content + "\"");
-        queryString.field(field);
-        queryString.minimumShouldMatch("10");
-
-        reqBuilder.setQuery(QueryBuilders.filteredQuery(queryString, FilterBuilders.rangeFilter("taskState").from(start).to(end)))
-                .setExplain(true);
-
-        SearchResponse resp = reqBuilder.execute().actionGet();
-        SearchHit[] hits = resp.getHits().getHits();
+//        SearchRequestBuilder reqBuilder = client.prepareSearch(esIndexName)
+//                .setTypes(type).setSearchType(SearchType.DEFAULT)
+//                .setExplain(true);
+//        QueryStringQueryBuilder queryString = QueryBuilders.queryString("\""
+//                + content + "\"");
+//        queryString.field(field);
+//        queryString.minimumShouldMatch("10");
+//
+//        reqBuilder.setQuery(QueryBuilders.filteredQuery(queryString, FilterBuilders.rangeFilter("taskState").from(start).to(end)))
+//                .setExplain(true);
+//
+//        SearchResponse resp = reqBuilder.execute().actionGet();
+//        SearchHit[] hits = resp.getHits().getHits();
 
         List<Map<String, Object>> results = new ArrayList<Map<String, Object>>();
-        for (SearchHit hit : hits) {
-            results.add(hit.getSource());
-        }
+//        for (SearchHit hit : hits) {
+//            results.add(hit.getSource());
+//        }
         return results;
     }
 

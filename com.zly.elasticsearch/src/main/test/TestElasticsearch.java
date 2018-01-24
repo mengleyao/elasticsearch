@@ -88,7 +88,7 @@ public class TestElasticsearch {
      */
     @Test
     public void testGet() {
-        GetResponse getResponse = transportClient.prepareGet(index, type, "1").get();
+        GetResponse getResponse = transportClient.prepareGet(index, type, "3").get();
         System.out.println(getResponse.getSourceAsString());
     }
 
