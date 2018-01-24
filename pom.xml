@@ -89,12 +89,6 @@
       <version>1.0.0.RELEASE</version>
     </dependency>
 
-    <dependency>
-      <groupId>com.alibaba</groupId>
-      <artifactId>druid</artifactId>
-      <version>1.0.5</version>
-    </dependency>
-
     <!--json-lib -->
     <dependency>
       <groupId>net.sf.json-lib</groupId>

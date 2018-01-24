@@ -183,19 +183,7 @@ public class TestElasticsearch {
      * 通过prepareDelete删除文档
      *
      */
-    @Test
-    public void testDelete()
-    {
-        String id = "9";
-        DeleteResponse deleteResponse = transportClient.prepareDelete(index,
-                type, id).get();
 
-        System.out.println(deleteResponse.getVersion());
-
-        //删除所有记录
-        transportClient.prepareDeleteByQuery(index).setTypes(type)
-                .setQuery(QueryBuilders.matchAllQuery()).get();
-    }
 
     /**
      * 删除索引库，不可逆慎用
@@ -209,12 +197,7 @@ public class TestElasticsearch {
     /**
      * 求索引库文档总数
      */
-    @Test
-    public void testCount()
-    {
-        long count = transportClient.prepareCount(index).get().getCount();
-        System.out.println(count);
-    }
+
 
     /**
      * 通过prepareBulk执行批处理
@@ -323,63 +306,7 @@ public class TestElasticsearch {
      * gte 大于等于
      *
      */
-    @Test
-    public void testFilter()
-    {
-        SearchResponse searchResponse = transportClient.prepareSearch(index)
-                .setTypes(type)
-                .setQuery(QueryBuilders.matchAllQuery()) //查询所有
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-//              .setPostFilter(FilterBuilders.rangeFilter("age").from(0).to(19)
-//                      .includeLower(true).includeUpper(true))
-                .setPostFilter(FilterBuilders.rangeFilter("age").gte(18).lte(22))
-                .setExplain(true) //explain为true表示根据数据相关度排序，和关键字匹配最高的排在前面
-                .get();
 
-
-        SearchHits hits = searchResponse.getHits();
-        long total = hits.getTotalHits();
-        System.out.println(total);
-        SearchHit[] searchHits = hits.hits();
-        for(SearchHit s : searchHits)
-        {
-            System.out.println(s.getSourceAsString());
-        }
-    }
-
-    /**
-     * 高亮
-     */
-    @Test
-    public void testHighLight()
-    {
-        SearchResponse searchResponse = transportClient.prepareSearch(index)
-                .setTypes(type)
-                //.setQuery(QueryBuilders.matchQuery("name", "Fresh")) //查询所有
-                .setQuery(QueryBuilders.queryString("name:F*")
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .addHighlightedField("name")
-                .setHighlighterPreTags("<font color='red'>")
-                .setHighlighterPostTags("</font>")
-                .get();
-
-
-        SearchHits hits = searchResponse.getHits();
-        System.out.println("sum:" + hits.getTotalHits());
-
-        SearchHit[] hits2 = hits.getHits();
-        for(SearchHit s : hits2)
-        {
-            Map<String, HighlightField> highlightFields = s.getHighlightFields();
-            HighlightField highlightField = highlightFields.get("name");
-            if(null != highlightField)
-            {
-                Text[] fragments = highlightField.fragments();
-                System.out.println(fragments[0]);
-            }
-            System.out.println(s.getSourceAsString());
-        }
-    }
 
     /**
      * 分组
