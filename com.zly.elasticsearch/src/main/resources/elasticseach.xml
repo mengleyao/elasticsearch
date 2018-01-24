@@ -9,14 +9,12 @@
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
     <util:map id="esproperties">
-        <entry key="cluster.name" value="${elasticsearch.cluster.name}"/>
+        <entry key="cluster.name" value="${cluster.name}"/>
     </util:map>
 
-    <elasticsearch:client id="client" properties="esproperties"
-                          esNodes="localhost:9300"/>
+    <elasticsearch:client id="client" properties="esproperties" esNodes="${elasticsearch.nodes}"/>
 
-    <bean name="elasticsearchTemplate"
-          class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
+    <bean name="elasticsearchTemplate" class="org.springframework.data.elasticsearch.core.ElasticsearchTemplate">
         <constructor-arg name="client" ref="client"/>
     </bean>
 

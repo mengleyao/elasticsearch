@@ -8,7 +8,7 @@
     <!-- 自动扫描所有注解该路径 -->
     <context:component-scan base-package="com.zly.elasticsearch.*" />
 
-    <context:property-placeholder location="classpath:/common.properties" />
+    <context:property-placeholder location="classpath:/application.properties" />
     <context:property-placeholder location="classpath:/log4j.properties" />
 
     <import resource="elasticseach.xml" />
