@@ -1,6 +1,7 @@
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zly.elasticsearch.entity.Student;
+import com.zly.elasticsearch.entity.UserInfo;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -22,6 +23,7 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -33,6 +35,9 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -41,12 +46,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
+
 public class TestElasticsearch {
     TransportClient transportClient;
     //索引库名
-    String index = "shb01";
+    String index = "test_es";
     //类型名称
-    String type = "stu";
+    String type = "user";
 
     @Before
     public void before()
@@ -70,25 +77,110 @@ public class TestElasticsearch {
 
         /**
          * 3：查看集群信息
-         * 注意我的集群结构是：
-         *   131的elasticsearch.yml中指定为主节点不能存储数据，
-         *   128的elasticsearch.yml中指定不为主节点只能存储数据。
-         * 所有控制台只打印了192.168.79.128,只能获取数据节点
-         *
          */
         List<DiscoveryNode> nodes = transportClient.connectedNodes();
         for (DiscoveryNode node : nodes) {
             System.out.println(node.getHostAddress());
         }
-
     }
 
+    /**
+     * 拼json串的方式存数据,通过prepareIndex方法
+     */
+    @Test
+    public void testJson() {
+        String json = "{" +
+                "\"userId\":\"1\"," +
+                "\"userName\":\"zhangmeng\"," +
+                "\"nickName\":\"mengguo\"," +
+                "\"headUrl\":\"www.jd.com\"," +
+                "\"nickName\":\"mengguo\"," +
+                "\"tags\":\"king\"," +
+                "\"sex\":1," +
+                "\"location\":\"beijing\"," +
+                "\"type\":1" +
+                "}";
+        IndexResponse response = transportClient.prepareIndex(index, type,"1")
+                .setSource(json, XContentType.JSON)
+                .get();
+        System.out.println(response.getIndex());
+        System.out.println(response.getType());
+        System.out.println(response.getId());
+        System.out.println(response.getVersion());
+    }
+
+    /**
+     * 用Map的方式插数据,通过prepareIndex方法
+     */
+    @Test
+    public void testMap() {
+        Map<String, Object> json = new HashMap<String, Object>();
+        json.put("userId","2");
+        json.put("userName","zhangliyao");
+        json.put("nickName","xiannvjiejie");
+        json.put("headUrl","www.jd.com");
+        json.put("tags","nannan");
+        json.put("sex",2);
+        json.put("location","xian");
+        json.put("type",1);
+        IndexResponse response = transportClient.prepareIndex(index,type,"2")
+                .setSource(json, XContentType.JSON)
+                .get();
+        System.out.println(response.getIndex());
+    }
+
+    /**
+     * 用实体类的方式插入,通过prepareIndex方法
+     */
+    @Test
+    public void testBean() throws Exception{
+        UserInfo userInfo = new UserInfo();
+        userInfo.setUserId("3");
+        userInfo.setUserName("liqiaoling");
+        userInfo.setNickName("qiaoling");
+        userInfo.setHeadUrl("www.jd.com");
+        userInfo.setTags("nvshen");
+        userInfo.setSex(2);
+        userInfo.setLocation("wuhan");
+        userInfo.setType(1);
+        // 初始化json mapper
+        ObjectMapper mapper = new ObjectMapper();
+        // 把bean转化为json串
+        byte[] json = mapper.writeValueAsBytes(userInfo);
+        IndexResponse response = transportClient.prepareIndex(index,type,"3")
+                .setSource(json,XContentType.JSON)
+                .get();
+        System.out.println(response.getIndex());
+    }
+
+    /**
+     * 用esHelper的方式插入数据,通过prepareIndex方法
+     */
+    @Test
+    public void testESHelper() throws Exception{
+        XContentBuilder builder = jsonBuilder()
+                .startObject()
+                .field("userId", "4")
+                .field("userName", "sunxiaoliang")
+                .field("nickName", "teacherSun")
+                .field("headUrl","www.jd.com")
+                .field("tags","daijian")
+                .field("sex",1)
+                .field("location","beijing")
+                .field("type","1")
+                .endObject();
+        String json = builder.string();
+        IndexResponse response = transportClient.prepareIndex(index,type,"4")
+                .setSource(json,XContentType.JSON)
+                .get();
+        System.out.println(response.getIndex());
+    }
     /**
      * 通过prepareGet方法获取指定文档信息
      */
     @Test
     public void testGet() {
-        GetResponse getResponse = transportClient.prepareGet(index, type, "3").get();
+        GetResponse getResponse = transportClient.prepareGet(index, type, "4").get();
         System.out.println(getResponse.getSourceAsString());
     }
 
@@ -100,7 +192,7 @@ public class TestElasticsearch {
     @Test
     public void testUpdate() throws IOException
     {
-        XContentBuilder source = XContentFactory.jsonBuilder()
+        XContentBuilder source = jsonBuilder()
                 .startObject()
                 .field("name", "will")
                 .endObject();
@@ -109,74 +201,6 @@ public class TestElasticsearch {
                 .prepareUpdate(index, type, "6").setDoc(source).get();
 
         System.out.println(updateResponse.getVersion());
-    }
-
-    /**
-     * 通过prepareIndex增加文档，参数为json字符串
-     */
-    @Test
-    public void testIndexJson()
-    {
-        String source = "{\"name\":\"will\",\"age\":18}";
-        IndexResponse indexResponse = transportClient
-                .prepareIndex(index, type, "3").setSource(source).get();
-        System.out.println(indexResponse.getVersion());
-    }
-
-    /**
-     * 通过prepareIndex增加文档，参数为Map<String,Object>
-     */
-    @Test
-    public void testIndexMap()
-    {
-        Map<String, Object> source = new HashMap<String, Object>(2);
-        source.put("name", "Alice");
-        source.put("age", 16);
-        IndexResponse indexResponse = transportClient
-                .prepareIndex(index, type, "4").setSource(source).get();
-        System.out.println(indexResponse.getVersion());
-    }
-
-    /**
-     * 通过prepareIndex增加文档，参数为javaBean
-     *
-     * @throws ElasticsearchException
-     * @throws JsonProcessingException
-     */
-    @Test
-    public void testIndexBean() throws ElasticsearchException, JsonProcessingException
-    {
-        Student stu = new Student();
-        stu.setName("Fresh");
-        stu.setAge(22);
-
-        ObjectMapper mapper = new ObjectMapper();
-        IndexResponse indexResponse = transportClient
-                .prepareIndex(index, type, "5").setSource(mapper.writeValueAsString(stu)).get();
-        System.out.println(indexResponse.getVersion());
-    }
-
-    /**
-     * 通过prepareIndex增加文档，参数为XContentBuilder
-     *
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws ExecutionException
-     */
-    @Test
-    public void testIndexXContentBuilder() throws IOException, InterruptedException, ExecutionException
-    {
-        XContentBuilder builder = XContentFactory.jsonBuilder()
-                .startObject()
-                .field("name", "Avivi")
-                .field("age", 30)
-                .endObject();
-        IndexResponse indexResponse = transportClient
-                .prepareIndex(index, type, "6")
-                .setSource(builder)
-                .execute().get();
-        //.execute().get();和get()效果一样
-        System.out.println(indexResponse.getVersion());
     }
 
     /**
@@ -212,7 +236,7 @@ public class TestElasticsearch {
 
         //2:新增
         IndexRequest add = new IndexRequest(index, type, "10");
-        add.source(XContentFactory.jsonBuilder()
+        add.source(jsonBuilder()
                 .startObject()
                 .field("name", "Henrry").field("age", 30)
                 .endObject());
@@ -221,7 +245,7 @@ public class TestElasticsearch {
         DeleteRequest del = new DeleteRequest(index, type, "1");
 
         //4:修改
-        XContentBuilder source = XContentFactory.jsonBuilder().startObject().field("name", "jack_1").field("age", 19).endObject();
+        XContentBuilder source = jsonBuilder().startObject().field("name", "jack_1").field("age", 19).endObject();
         UpdateRequest update = new UpdateRequest(index, type, "2");
         update.doc(source);
 

@@ -34,8 +34,6 @@ public class UserInfo {
     @Field(type = FieldType.Integer, index = FieldIndex.not_analyzed, store = true)
     private Integer type;
 
-    @Field(type = FieldType.String, index = FieldIndex.not_analyzed, store = true)
-    private String personalDes;
 
     public UserInfo(String userId, String userName, String nickName, String headUrl, String tags, Integer sex, String location, Integer type, String personalDes) {
         this.userId = userId;
@@ -46,7 +44,6 @@ public class UserInfo {
         this.sex = sex;
         this.location = location;
         this.type = type;
-        this.personalDes = personalDes;
     }
 
     public UserInfo() {
@@ -116,11 +113,4 @@ public class UserInfo {
         this.type = type;
     }
 
-    public String getPersonalDes() {
-        return personalDes;
-    }
-
-    public void setPersonalDes(String personalDes) {
-        this.personalDes = personalDes;
-    }
 }
