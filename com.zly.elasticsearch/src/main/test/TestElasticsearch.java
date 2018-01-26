@@ -9,6 +9,8 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.get.MultiGetItemResponse;
+import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -24,7 +26,11 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -50,9 +56,9 @@ import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class TestElasticsearch {
     TransportClient transportClient;
-    //索引库名
+    //索引库名(库名)
     String index = "test_es";
-    //类型名称
+    //类型名称(表名)
     String type = "user";
 
     @Before
@@ -175,83 +181,175 @@ public class TestElasticsearch {
                 .get();
         System.out.println(response.getIndex());
     }
+
     /**
-     * 通过prepareGet方法获取指定文档信息
+     * 通过prepareGet方法获取指定文档(指定Id)信息
      */
     @Test
     public void testGet() {
-        GetResponse getResponse = transportClient.prepareGet(index, type, "4").get();
+        GetResponse getResponse = transportClient.prepareGet(index, type, "8").get();
         System.out.println(getResponse.getSourceAsString());
     }
 
     /**
-     * prepareUpdate更新索引库中文档，如果文档不存在则会报错
+     *通过prepareDelete方法删除指定文档(指定Id)信息
+     */
+    @Test
+    public void testDelete() {
+        DeleteResponse deleteResponse = transportClient.prepareDelete(index,type,"7").get();
+        //验证是否删除成功
+        GetResponse getResponse = transportClient.prepareGet(index, type, "1").get();
+        System.out.println(getResponse.getSourceAsString());
+    }
+
+    /**
+     *通过deleteByQueryAction删除符合查询条件的文档
+     */
+    @Test
+    public void testDeleteByQuery() {
+        BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(transportClient)
+                //删除所有符合sex为1的文档
+                //TODO 当查询条件出错的时候会全部删除，比如sex的值给成String类型
+                .filter(QueryBuilders.matchQuery("sex",1))
+                .source(index)
+                .get();
+        long deleted = response.getDeleted();
+        System.out.println(deleted);
+    }
+
+    /**
+     * 删除文档的时候添加listener
+     */
+
+    /**
+     * 通过新建UpdateRequest的方式更新文档，文档不存在也不会报错，但是插不进去（对比upsert）
+     * @throws Exception
+     */
+    @Test
+    public void testUpdateRequest() throws Exception{
+        UpdateRequest request = new UpdateRequest();
+        request.index(index);
+        request.type(type);
+        request.id("8");
+        request.doc(jsonBuilder()
+                    .startObject()
+                    //把sex从2改成1
+                    .field("sex",1)
+                    .endObject());
+        transportClient.update(request);
+        //TODO 为什么直接调用this.testGet会出现结果延迟
+    }
+
+    /**
+     * 通过prepareUpdate更新索引库中文档，如果文档不存在则会报错
      * @throws IOException
      *
      */
     @Test
-    public void testUpdate() throws IOException
-    {
+    public void testPreparedUpdate() throws IOException {
+        //方法一
         XContentBuilder source = jsonBuilder()
                 .startObject()
-                .field("name", "will")
+                .field("userName", "will")
                 .endObject();
-
         UpdateResponse updateResponse = transportClient
-                .prepareUpdate(index, type, "6").setDoc(source).get();
-
+                .prepareUpdate(index, type, "1").setDoc(source).get();
+        System.out.println(updateResponse.getVersion());
+        //方法二
+        UpdateResponse response = transportClient.prepareUpdate(index,type,"1")
+                .setDoc(jsonBuilder()
+                        .startObject()
+                        .field("sex",2)
+                        .endObject())
+                .get();
         System.out.println(updateResponse.getVersion());
     }
 
     /**
-     * 通过prepareDelete删除文档
-     *
-     */
-
-
-    /**
-     * 删除索引库，不可逆慎用
+     * 通过script更新文档，ctx._source.XXX是固定格式，如果文档不存在则会报错
+     * @throws Exception
      */
     @Test
-    public void testDeleteeIndex()
-    {
-        transportClient.admin().indices().prepareDelete("shb01","shb02").get();
+    public void testUpdateByScript() throws Exception{
+        UpdateRequest request = new UpdateRequest(index,type,"1")
+                .script(new Script("ctx._source.nickName=\"haha\""));
+        transportClient.update(request).get();
     }
 
     /**
-     * 求索引库文档总数
+     * 更新的时候创建不存在的文档，并保存信息
+     * @throws Exception
      */
+    @Test
+    public void testUpsert() throws Exception{
+        IndexRequest indexRequest = new IndexRequest(index, type, "7")
+                .source(jsonBuilder()
+                        .startObject()
+                        .field("userName", "Joe Smith")
 
+                        .endObject());
+        UpdateRequest updateRequest = new UpdateRequest(index, type, "7")
+                .doc(jsonBuilder()
+                        .startObject()
+                        .field("userName", "Wendy")
+                        .field("sex",1)
+                        .endObject())
+                //TODO 运行结果有点奇怪
+                .upsert(indexRequest);
+        transportClient.update(updateRequest).get();
+    }
+
+    /**
+     * 通过prepareMultiGet批量获取文档信息
+     * 单Id，多Id，其他索引
+     */
+    @Test
+    public void testMultiGet() {
+        MultiGetResponse responses = transportClient.prepareMultiGet()
+                .add(index,type,"1")
+                .add(index,type,"2","3")
+                .add("index","type","7")
+                .get();
+        for(MultiGetItemResponse response : responses) {
+            GetResponse getResponse = response.getResponse();
+            if(getResponse.isExists()) {
+                System.out.print(getResponse.getSourceAsString());
+            }
+        }
+    }
 
     /**
      * 通过prepareBulk执行批处理
-     *
      * @throws IOException
      */
     @Test
-    public void testBulk() throws IOException
-    {
+    public void testBulk() throws IOException {
         //1:生成bulk
         BulkRequestBuilder bulk = transportClient.prepareBulk();
 
         //2:新增
-        IndexRequest add = new IndexRequest(index, type, "10");
+        IndexRequest add = new IndexRequest(index, type, "5");
         add.source(jsonBuilder()
                 .startObject()
-                .field("name", "Henrry").field("age", 30)
+                .field("userName", "libin")
+                .field("nickName", "leader")
                 .endObject());
 
         //3:删除
         DeleteRequest del = new DeleteRequest(index, type, "1");
 
         //4:修改
-        XContentBuilder source = jsonBuilder().startObject().field("name", "jack_1").field("age", 19).endObject();
+        XContentBuilder source = jsonBuilder()
+                .startObject()
+                .field("userName", "jack_1")
+                .endObject();
         UpdateRequest update = new UpdateRequest(index, type, "2");
         update.doc(source);
 
         bulk.add(del);
         bulk.add(add);
         bulk.add(update);
+
         //5:执行批处理
         BulkResponse bulkResponse = bulk.get();
         if(bulkResponse.hasFailures())
@@ -267,6 +365,13 @@ public class TestElasticsearch {
             System.out.println("全部执行成功！");
         }
     }
+
+
+
+
+
+
+
 
     /**
      * 通过prepareSearch查询索引库
@@ -376,4 +481,17 @@ public class TestElasticsearch {
         }
 
     }
+
+    /**
+     * 删除索引库，不可逆慎用
+     */
+    @Test
+    public void testDeleteeIndex()
+    {
+        transportClient.admin().indices().prepareDelete("shb01","shb02").get();
+    }
+
+    /**
+     * 求索引库文档总数
+     */
 }
