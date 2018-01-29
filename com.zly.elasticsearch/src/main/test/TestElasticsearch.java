@@ -13,8 +13,7 @@ import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.search.SearchType;
+import org.elasticsearch.action.search.*;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
@@ -26,6 +25,7 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -33,6 +33,7 @@ import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
@@ -366,30 +367,57 @@ public class TestElasticsearch {
         }
     }
 
-
-
-
-
-
-
+    /**
+     * 用prepareSearch进行查询（无条件查询）
+     */
+    @Test
+    public void testPrepareSearch() {
+        SearchResponse response = transportClient.prepareSearch().get();
+        SearchHits hits = response.getHits();
+        //得到总查询条数
+        Long hitsNum = hits.getTotalHits();
+        System.out.println("总查询条数为："+hitsNum);
+        //得到查询结果数组
+        SearchHit[] searchHits = hits.getHits();
+        for(SearchHit searchHit : searchHits) {
+            System.out.println(searchHit.getSourceAsString());
+        }
+    }
 
     /**
-     * 通过prepareSearch查询索引库
-     * setQuery(QueryBuilders.matchQuery("name", "jack"))
-     * setSearchType(SearchType.QUERY_THEN_FETCH)
-     *
+     * 通过prepareSearch查询索引库（有条件查询，包括几乎所有查询条件）
      */
     @Test
     public void testSearch()
     {
+        //TODO 对比所有不同种类查询的源码，弄清楚到底区别在哪里
         SearchResponse searchResponse = transportClient.prepareSearch(index)
                 .setTypes(type)
                 .setQuery(QueryBuilders.matchAllQuery()) //查询所有
-                //.setQuery(QueryBuilders.matchQuery("name", "tom").operator(Operator.AND)) //根据tom分词查询name,默认or
-                //.setQuery(QueryBuilders.multiMatchQuery("tom", "name", "age")) //指定查询的字段
-                //.setQuery(QueryBuilders.queryString("name:to* AND age:[0 TO 19]")) //根据条件查询,支持通配符大于等于0小于等于19
-                //.setQuery(QueryBuilders.termQuery("name", "tom"))//查询时不分词
+                .setQuery(QueryBuilders.matchPhraseQuery("location", "beijing")) //基本查询
+                .setQuery(QueryBuilders.matchQuery("userName", "zhangliyao").operator(Operator.AND)) //根据zhangliyao分词查询name,默认or
+                .setQuery(QueryBuilders.multiMatchQuery("zhangliyao", "name", "age")) //一个值匹配多个字段
+                //simpleQueryStringQuery跟queryStringQuery的差别就是永远不抛异常，并且会舍掉无效的部分
+                .setQuery(QueryBuilders.queryStringQuery("name:to* AND age:[0 TO 19]")) //根据条件查询,大于等于0小于等于19。支持通配符
+                .setQuery(QueryBuilders.termQuery("name", "tom"))//精确查询
+                .setQuery(QueryBuilders.existsQuery("nannan"))//存在查询，返回至少一个非空文档
+                .setQuery(QueryBuilders.regexpQuery("userName","s.*y"))//存在查询，返回至少一个非空文档
+                .setQuery(QueryBuilders.commonTermsQuery("userName","zhangliyao"))//常用词查询
+                .setQuery(QueryBuilders.fuzzyQuery("nickName","nannan"))//模糊查询
+                .setQuery(QueryBuilders.prefixQuery("nickName","na"))//前缀查询
+                .setQuery(QueryBuilders.wildcardQuery("location", "bei*"))//通配符查询
+                .setQuery(QueryBuilders.idsQuery(type).addIds("1","3"))//id查询
+                .setPostFilter(QueryBuilders.rangeQuery("age").from(1).to(2).includeLower(true))//范围查询from to
+                .setPostFilter(QueryBuilders.rangeQuery("age").gt(1).lt(2).includeLower(true))//范围查询大于小于
+                .setPostFilter(QueryBuilders.rangeQuery("age").gte(1).lte(2).includeLower(true))//范围查询大于等于小于等于
+                /*
+                QUERY_AND_FETCH：只追求查询性能的时候可以选择
+                QUERY_THEN_FETCH：默认
+                DFS_QUERY_AND_FETCH：只需要排名准确即可
+                DFS_QUERY_THEN_FETCH：对效率要求不是非常高，对查询准确度要求非常高，建议使用这一种
+                */
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
+                .setExplain(true)//按照查询数据的匹配度返回数据
                 .setFrom(0).setSize(10)//分页
                 .addSort("age", SortOrder.DESC)//排序
                 .get();
@@ -405,13 +433,13 @@ public class TestElasticsearch {
     }
 
     /**
-     * 多索引，多类型查询
-     * timeout
+     * 多索引，多类型查询(包含timeout)
      */
     @Test
     public void testSearchsAndTimeout()
     {
-        SearchResponse searchResponse = transportClient.prepareSearch("shb01","shb02").setTypes("stu","tea")
+        SearchResponse searchResponse = transportClient.prepareSearch("shb01","shb02")
+                .setTypes("stu","tea")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setTimeout(new TimeValue(3000l))
@@ -428,14 +456,52 @@ public class TestElasticsearch {
     }
 
     /**
-     * 过滤，
-     * lt 小于
-     * gt 大于
-     * lte 小于等于
-     * gte 大于等于
+     * 用prepareMultiSearch进行多条件查询
+     */
+    @Test
+    public void testMultiSearch() {
+        SearchRequestBuilder srb1 =
+                transportClient.prepareSearch().setQuery(QueryBuilders.queryStringQuery("elasticsearch")).setSize(10);
+        SearchRequestBuilder srb2 =
+                transportClient.prepareSearch().setQuery(QueryBuilders.termQuery("userName","zhangliyao")).setSize(10);
+        MultiSearchResponse response = transportClient.prepareMultiSearch().add(srb1).add(srb2).get();
+        long nbHits = 0;
+        for (MultiSearchResponse.Item item : response.getResponses()) {
+            SearchResponse searchResponse = item.getResponse();
+            nbHits += searchResponse.getHits().getTotalHits();
+            SearchHit[] searchHits = searchResponse.getHits().getHits();
+            for(SearchHit searchHit : searchHits) {
+                System.out.println(searchHit.getSourceAsString());
+            }
+        }
+        System.out.println(nbHits);
+    }
+
+    /**
+     * 聚合函数查询
      *
      */
+    @Test
+    public void testAggregation()
+    {
+        SearchResponse searchResponse1 = transportClient.prepareSearch(index).setTypes(type)
+                .setQuery(QueryBuilders.matchAllQuery())
+                .setSearchType(SearchType.QUERY_THEN_FETCH)
+                //group_name为输出聚合的名字
+                .addAggregation(AggregationBuilders.terms("group_name").field("name")
+                        //.subAggregation(AggregationBuilders.sum("sum_age").field("age")))//求和
+                        .subAggregation(AggregationBuilders.avg("avg_age").field("age")))//求均值
+                .get();
 
+        Terms terms = searchResponse1.getAggregations().get("group_name");
+        List<Terms.Bucket> buckets = (List<Terms.Bucket>)terms.getBuckets();
+        for(Terms.Bucket bt : buckets)
+        {
+            Sum sum = bt.getAggregations().get("sum_age");
+            System.out.println(bt.getKey() + "  " + bt.getDocCount() + " "+ sum.getValue());
+        }
+
+    }
 
     /**
      * 分组
@@ -456,30 +522,6 @@ public class TestElasticsearch {
         {
             System.out.println(bt.getKey() + " " + bt.getDocCount());
         }
-    }
-
-    /**
-     * 聚合函数,本例之编写了sum，其他的聚合函数也可以实现
-     *
-     */
-    @Test
-    public void testMethod()
-    {
-        SearchResponse searchResponse = transportClient.prepareSearch(index).setTypes(type)
-                .setQuery(QueryBuilders.matchAllQuery())
-                .setSearchType(SearchType.QUERY_THEN_FETCH)
-                .addAggregation(AggregationBuilders.terms("group_name").field("name")
-                        .subAggregation(AggregationBuilders.sum("sum_age").field("age")))
-                .get();
-
-        Terms terms = searchResponse.getAggregations().get("group_name");
-        List<Terms.Bucket> buckets = (List<Terms.Bucket>)terms.getBuckets();
-        for(Terms.Bucket bt : buckets)
-        {
-            Sum sum = bt.getAggregations().get("sum_age");
-            System.out.println(bt.getKey() + "  " + bt.getDocCount() + " "+ sum.getValue());
-        }
-
     }
 
     /**
