@@ -1,8 +1,5 @@
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zly.elasticsearch.entity.Student;
 import com.zly.elasticsearch.entity.UserInfo;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -19,39 +16,30 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.cluster.node.DiscoveryNode;
 import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.text.Text;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.Operator;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.sum.Sum;
-import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
@@ -63,8 +51,7 @@ public class TestElasticsearch {
     String type = "user";
 
     @Before
-    public void before()
-    {
+    public void before() {
         /**
          * 1:通过 setting对象来指定集群配置信息
          */
@@ -78,7 +65,7 @@ public class TestElasticsearch {
         try {
             transportClient = new PreBuiltTransportClient(settings)
                     .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName("116.196.95.212"), 9300));
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
 
@@ -107,7 +94,7 @@ public class TestElasticsearch {
                 "\"location\":\"beijing\"," +
                 "\"type\":1" +
                 "}";
-        IndexResponse response = transportClient.prepareIndex(index, type,"1")
+        IndexResponse response = transportClient.prepareIndex(index, type, "1")
                 .setSource(json, XContentType.JSON)
                 .get();
         System.out.println(response.getIndex());
@@ -122,15 +109,15 @@ public class TestElasticsearch {
     @Test
     public void testMap() {
         Map<String, Object> json = new HashMap<String, Object>();
-        json.put("userId","2");
-        json.put("userName","zhangliyao");
-        json.put("nickName","xiannvjiejie");
-        json.put("headUrl","www.jd.com");
-        json.put("tags","nannan");
-        json.put("sex",2);
-        json.put("location","xian");
-        json.put("type",1);
-        IndexResponse response = transportClient.prepareIndex(index,type,"2")
+        json.put("userId", "2");
+        json.put("userName", "zhangliyao");
+        json.put("nickName", "xiannvjiejie");
+        json.put("headUrl", "www.jd.com");
+        json.put("tags", "nannan");
+        json.put("sex", 2);
+        json.put("location", "xian");
+        json.put("type", 1);
+        IndexResponse response = transportClient.prepareIndex(index, type, "2")
                 .setSource(json, XContentType.JSON)
                 .get();
         System.out.println(response.getIndex());
@@ -140,7 +127,7 @@ public class TestElasticsearch {
      * 用实体类的方式插入,通过prepareIndex方法
      */
     @Test
-    public void testBean() throws Exception{
+    public void testBean() throws Exception {
         UserInfo userInfo = new UserInfo();
         userInfo.setUserId("3");
         userInfo.setUserName("liqiaoling");
@@ -154,8 +141,8 @@ public class TestElasticsearch {
         ObjectMapper mapper = new ObjectMapper();
         // 把bean转化为json串
         byte[] json = mapper.writeValueAsBytes(userInfo);
-        IndexResponse response = transportClient.prepareIndex(index,type,"3")
-                .setSource(json,XContentType.JSON)
+        IndexResponse response = transportClient.prepareIndex(index, type, "3")
+                .setSource(json, XContentType.JSON)
                 .get();
         System.out.println(response.getIndex());
     }
@@ -164,21 +151,21 @@ public class TestElasticsearch {
      * 用esHelper的方式插入数据,通过prepareIndex方法
      */
     @Test
-    public void testESHelper() throws Exception{
+    public void testESHelper() throws Exception {
         XContentBuilder builder = jsonBuilder()
                 .startObject()
                 .field("userId", "4")
                 .field("userName", "sunxiaoliang")
                 .field("nickName", "teacherSun")
-                .field("headUrl","www.jd.com")
-                .field("tags","daijian")
-                .field("sex",1)
-                .field("location","beijing")
-                .field("type","1")
+                .field("headUrl", "www.jd.com")
+                .field("tags", "daijian")
+                .field("sex", 1)
+                .field("location", "beijing")
+                .field("type", "1")
                 .endObject();
         String json = builder.string();
-        IndexResponse response = transportClient.prepareIndex(index,type,"4")
-                .setSource(json,XContentType.JSON)
+        IndexResponse response = transportClient.prepareIndex(index, type, "4")
+                .setSource(json, XContentType.JSON)
                 .get();
         System.out.println(response.getIndex());
     }
@@ -193,25 +180,25 @@ public class TestElasticsearch {
     }
 
     /**
-     *通过prepareDelete方法删除指定文档(指定Id)信息
+     * 通过prepareDelete方法删除指定文档(指定Id)信息
      */
     @Test
     public void testDelete() {
-        DeleteResponse deleteResponse = transportClient.prepareDelete(index,type,"7").get();
+        DeleteResponse deleteResponse = transportClient.prepareDelete(index, type, "7").get();
         //验证是否删除成功
         GetResponse getResponse = transportClient.prepareGet(index, type, "1").get();
         System.out.println(getResponse.getSourceAsString());
     }
 
     /**
-     *通过deleteByQueryAction删除符合查询条件的文档
+     * 通过deleteByQueryAction删除符合查询条件的文档
      */
     @Test
     public void testDeleteByQuery() {
         BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(transportClient)
                 //删除所有符合sex为1的文档
                 //TODO 当查询条件出错的时候会全部删除，比如sex的值给成String类型
-                .filter(QueryBuilders.matchQuery("sex",1))
+                .filter(QueryBuilders.matchQuery("sex", 1))
                 .source(index)
                 .get();
         long deleted = response.getDeleted();
@@ -224,27 +211,28 @@ public class TestElasticsearch {
 
     /**
      * 通过新建UpdateRequest的方式更新文档，文档不存在也不会报错，但是插不进去（对比upsert）
+     *
      * @throws Exception
      */
     @Test
-    public void testUpdateRequest() throws Exception{
+    public void testUpdateRequest() throws Exception {
         UpdateRequest request = new UpdateRequest();
         request.index(index);
         request.type(type);
         request.id("8");
         request.doc(jsonBuilder()
-                    .startObject()
-                    //把sex从2改成1
-                    .field("sex",1)
-                    .endObject());
+                .startObject()
+                //把sex从2改成1
+                .field("sex", 1)
+                .endObject());
         transportClient.update(request);
         //TODO 为什么直接调用this.testGet会出现结果延迟
     }
 
     /**
      * 通过prepareUpdate更新索引库中文档，如果文档不存在则会报错
-     * @throws IOException
      *
+     * @throws IOException
      */
     @Test
     public void testPreparedUpdate() throws IOException {
@@ -257,10 +245,10 @@ public class TestElasticsearch {
                 .prepareUpdate(index, type, "1").setDoc(source).get();
         System.out.println(updateResponse.getVersion());
         //方法二
-        UpdateResponse response = transportClient.prepareUpdate(index,type,"1")
+        UpdateResponse response = transportClient.prepareUpdate(index, type, "1")
                 .setDoc(jsonBuilder()
                         .startObject()
-                        .field("sex",2)
+                        .field("sex", 2)
                         .endObject())
                 .get();
         System.out.println(updateResponse.getVersion());
@@ -268,21 +256,23 @@ public class TestElasticsearch {
 
     /**
      * 通过script更新文档，ctx._source.XXX是固定格式，如果文档不存在则会报错
+     *
      * @throws Exception
      */
     @Test
-    public void testUpdateByScript() throws Exception{
-        UpdateRequest request = new UpdateRequest(index,type,"1")
+    public void testUpdateByScript() throws Exception {
+        UpdateRequest request = new UpdateRequest(index, type, "1")
                 .script(new Script("ctx._source.nickName=\"haha\""));
         transportClient.update(request).get();
     }
 
     /**
      * 更新的时候创建不存在的文档，并保存信息
+     *
      * @throws Exception
      */
     @Test
-    public void testUpsert() throws Exception{
+    public void testUpsert() throws Exception {
         IndexRequest indexRequest = new IndexRequest(index, type, "7")
                 .source(jsonBuilder()
                         .startObject()
@@ -293,7 +283,7 @@ public class TestElasticsearch {
                 .doc(jsonBuilder()
                         .startObject()
                         .field("userName", "Wendy")
-                        .field("sex",1)
+                        .field("sex", 1)
                         .endObject())
                 //TODO 运行结果有点奇怪
                 .upsert(indexRequest);
@@ -307,20 +297,21 @@ public class TestElasticsearch {
     @Test
     public void testMultiGet() {
         MultiGetResponse responses = transportClient.prepareMultiGet()
-                .add(index,type,"1")
-                .add(index,type,"2","3")
-                .add("index","type","7")
+                .add(index, type, "1")
+                .add(index, type, "2", "3")
+                .add("index", "type", "7")
                 .get();
-        for(MultiGetItemResponse response : responses) {
+        for (MultiGetItemResponse response : responses) {
             GetResponse getResponse = response.getResponse();
-            if(getResponse.isExists()) {
-                System.out.print(getResponse.getSourceAsString());
+            if (getResponse.isExists()) {
+                System.out.println(getResponse.getSourceAsString());
             }
         }
     }
 
     /**
      * 通过prepareBulk执行批处理
+     *
      * @throws IOException
      */
     @Test
@@ -353,16 +344,12 @@ public class TestElasticsearch {
 
         //5:执行批处理
         BulkResponse bulkResponse = bulk.get();
-        if(bulkResponse.hasFailures())
-        {
+        if (bulkResponse.hasFailures()) {
             BulkItemResponse[] items = bulkResponse.getItems();
-            for(BulkItemResponse item : items)
-            {
+            for (BulkItemResponse item : items) {
                 System.out.println(item.getFailureMessage());
             }
-        }
-        else
-        {
+        } else {
             System.out.println("全部执行成功！");
         }
     }
@@ -376,10 +363,10 @@ public class TestElasticsearch {
         SearchHits hits = response.getHits();
         //得到总查询条数
         Long hitsNum = hits.getTotalHits();
-        System.out.println("总查询条数为："+hitsNum);
+        System.out.println("总查询条数为：" + hitsNum);
         //得到查询结果数组
         SearchHit[] searchHits = hits.getHits();
-        for(SearchHit searchHit : searchHits) {
+        for (SearchHit searchHit : searchHits) {
             System.out.println(searchHit.getSourceAsString());
         }
     }
@@ -388,8 +375,7 @@ public class TestElasticsearch {
      * 通过prepareSearch查询索引库（有条件查询，包括几乎所有查询条件）
      */
     @Test
-    public void testSearch()
-    {
+    public void testSearch() {
         //TODO 对比所有不同种类查询的源码，弄清楚到底区别在哪里
         SearchResponse searchResponse = transportClient.prepareSearch(index)
                 .setTypes(type)
@@ -401,12 +387,12 @@ public class TestElasticsearch {
                 .setQuery(QueryBuilders.queryStringQuery("name:to* AND age:[0 TO 19]")) //根据条件查询,大于等于0小于等于19。支持通配符
                 .setQuery(QueryBuilders.termQuery("name", "tom"))//精确查询
                 .setQuery(QueryBuilders.existsQuery("nannan"))//存在查询，返回至少一个非空文档
-                .setQuery(QueryBuilders.regexpQuery("userName","s.*y"))//存在查询，返回至少一个非空文档
-                .setQuery(QueryBuilders.commonTermsQuery("userName","zhangliyao"))//常用词查询
-                .setQuery(QueryBuilders.fuzzyQuery("nickName","nannan"))//模糊查询
-                .setQuery(QueryBuilders.prefixQuery("nickName","na"))//前缀查询
+                .setQuery(QueryBuilders.regexpQuery("userName", "s.*y"))//存在查询，返回至少一个非空文档
+                .setQuery(QueryBuilders.commonTermsQuery("userName", "zhangliyao"))//常用词查询
+                .setQuery(QueryBuilders.fuzzyQuery("nickName", "nannan"))//模糊查询
+                .setQuery(QueryBuilders.prefixQuery("nickName", "na"))//前缀查询
                 .setQuery(QueryBuilders.wildcardQuery("location", "bei*"))//通配符查询
-                .setQuery(QueryBuilders.idsQuery(type).addIds("1","3"))//id查询
+                .setQuery(QueryBuilders.idsQuery(type).addIds("1", "3"))//id查询
                 .setPostFilter(QueryBuilders.rangeQuery("age").from(1).to(2).includeLower(true))//范围查询from to
                 .setPostFilter(QueryBuilders.rangeQuery("age").gt(1).lt(2).includeLower(true))//范围查询大于小于
                 .setPostFilter(QueryBuilders.rangeQuery("age").gte(1).lte(2).includeLower(true))//范围查询大于等于小于等于
@@ -426,8 +412,7 @@ public class TestElasticsearch {
         long total = hits.getTotalHits();
         System.out.println(total);
         SearchHit[] searchHits = hits.hits();
-        for(SearchHit s : searchHits)
-        {
+        for (SearchHit s : searchHits) {
             System.out.println(s.getSourceAsString());
         }
     }
@@ -436,10 +421,9 @@ public class TestElasticsearch {
      * 多索引，多类型查询(包含timeout)
      */
     @Test
-    public void testSearchsAndTimeout()
-    {
-        SearchResponse searchResponse = transportClient.prepareSearch("shb01","shb02")
-                .setTypes("stu","tea")
+    public void testSearchsAndTimeout() {
+        SearchResponse searchResponse = transportClient.prepareSearch("shb01", "shb02")
+                .setTypes("stu", "tea")
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
                 .setTimeout(new TimeValue(3000l))
@@ -449,8 +433,7 @@ public class TestElasticsearch {
         long totalHits = hits.getTotalHits();
         System.out.println(totalHits);
         SearchHit[] hits2 = hits.getHits();
-        for(SearchHit h : hits2)
-        {
+        for (SearchHit h : hits2) {
             System.out.println(h.getSourceAsString());
         }
     }
@@ -463,14 +446,14 @@ public class TestElasticsearch {
         SearchRequestBuilder srb1 =
                 transportClient.prepareSearch().setQuery(QueryBuilders.queryStringQuery("elasticsearch")).setSize(10);
         SearchRequestBuilder srb2 =
-                transportClient.prepareSearch().setQuery(QueryBuilders.termQuery("userName","zhangliyao")).setSize(10);
+                transportClient.prepareSearch().setQuery(QueryBuilders.termQuery("userName", "zhangliyao")).setSize(10);
         MultiSearchResponse response = transportClient.prepareMultiSearch().add(srb1).add(srb2).get();
         long nbHits = 0;
         for (MultiSearchResponse.Item item : response.getResponses()) {
             SearchResponse searchResponse = item.getResponse();
             nbHits += searchResponse.getHits().getTotalHits();
             SearchHit[] searchHits = searchResponse.getHits().getHits();
-            for(SearchHit searchHit : searchHits) {
+            for (SearchHit searchHit : searchHits) {
                 System.out.println(searchHit.getSourceAsString());
             }
         }
@@ -479,11 +462,9 @@ public class TestElasticsearch {
 
     /**
      * 聚合函数查询
-     *
      */
     @Test
-    public void testAggregation()
-    {
+    public void testAggregation() {
         SearchResponse searchResponse1 = transportClient.prepareSearch(index).setTypes(type)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
@@ -494,11 +475,10 @@ public class TestElasticsearch {
                 .get();
 
         Terms terms = searchResponse1.getAggregations().get("group_name");
-        List<Terms.Bucket> buckets = (List<Terms.Bucket>)terms.getBuckets();
-        for(Terms.Bucket bt : buckets)
-        {
+        List<Terms.Bucket> buckets = (List<Terms.Bucket>) terms.getBuckets();
+        for (Terms.Bucket bt : buckets) {
             Sum sum = bt.getAggregations().get("sum_age");
-            System.out.println(bt.getKey() + "  " + bt.getDocCount() + " "+ sum.getValue());
+            System.out.println(bt.getKey() + "  " + bt.getDocCount() + " " + sum.getValue());
         }
 
     }
@@ -507,8 +487,7 @@ public class TestElasticsearch {
      * 分组
      */
     @Test
-    public void testGroupBy()
-    {
+    public void testGroupBy() {
         SearchResponse searchResponse = transportClient.prepareSearch(index).setTypes(type)
                 .setQuery(QueryBuilders.matchAllQuery())
                 .setSearchType(SearchType.QUERY_THEN_FETCH)
@@ -518,8 +497,7 @@ public class TestElasticsearch {
 
         Terms terms = searchResponse.getAggregations().get("group_age");
         List<Terms.Bucket> buckets = (List<Terms.Bucket>) terms.getBuckets();
-        for(Terms.Bucket bt : buckets)
-        {
+        for (Terms.Bucket bt : buckets) {
             System.out.println(bt.getKey() + " " + bt.getDocCount());
         }
     }
@@ -528,9 +506,8 @@ public class TestElasticsearch {
      * 删除索引库，不可逆慎用
      */
     @Test
-    public void testDeleteeIndex()
-    {
-        transportClient.admin().indices().prepareDelete("shb01","shb02").get();
+    public void testDeleteeIndex() {
+        transportClient.admin().indices().prepareDelete("shb01", "shb02").get();
     }
 
     /**
