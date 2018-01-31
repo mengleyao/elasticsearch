@@ -44,9 +44,11 @@ import java.util.Map;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 
 public class TestElasticsearch {
+
     TransportClient transportClient;
     //索引库名(库名)
     String index = "test_es";
+
     //类型名称(表名)
     String type = "user";
 
