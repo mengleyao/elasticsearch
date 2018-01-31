@@ -1,6 +1,6 @@
 package com.zly.elasticsearch.entity;
 
-import com.zly.elasticsearch.common.utils.APP;
+import com.zly.elasticsearch.common.APP;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -22,16 +22,16 @@ public class BrandCaseInfo {
     @Field(type = FieldType.String, index = FieldIndex.not_analyzed, store = true)
     private String brandId;
 
-    @Field(type = FieldType.String, indexAnalyzer="ik", searchAnalyzer="ik", store = true)
+    @Field(type = FieldType.String, indexAnalyzer = "ik", searchAnalyzer = "ik", store = true)
     private String content;
 
     @Field(type = FieldType.String, index = FieldIndex.not_analyzed, store = true)
     private String picture;
 
-    @Field(type = FieldType.String, indexAnalyzer="ik", searchAnalyzer="ik", store = true)
+    @Field(type = FieldType.String, indexAnalyzer = "ik", searchAnalyzer = "ik", store = true)
     private String price;
 
-    @Field(type = FieldType.String, indexAnalyzer="ik", searchAnalyzer="ik", store = true)
+    @Field(type = FieldType.String, indexAnalyzer = "ik", searchAnalyzer = "ik", store = true)
     private String tags;
 
     @Field(type = FieldType.String, index = FieldIndex.not_analyzed, store = true)

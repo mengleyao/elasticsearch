@@ -1,4 +1,3 @@
-import com.zly.elasticsearch.common.utils.APP;
 import com.zly.elasticsearch.entity.TaskInfo;
 import com.zly.elasticsearch.service.ElasticsearchService;
 import org.apache.log4j.Logger;

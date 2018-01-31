@@ -1,6 +1,6 @@
 package com.zly.elasticsearch.entity;
 
-import com.zly.elasticsearch.common.utils.APP;
+import com.zly.elasticsearch.common.APP;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;

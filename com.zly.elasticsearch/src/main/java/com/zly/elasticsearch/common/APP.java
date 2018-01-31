@@ -1,4 +1,4 @@
-package com.zly.elasticsearch.common.utils;
+package com.zly.elasticsearch.common;
 
 import java.util.HashMap;
 import java.util.Map;
